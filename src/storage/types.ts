@@ -42,6 +42,7 @@ export interface ArtifactRow {
   author: string; // JSON string
   compatibility: string; // JSON string
   dependencies: string; // JSON string
+  supporting_files: string | null; // JSON string
   estimated_time: string | null;
   created_at: string;
   updated_at: string;

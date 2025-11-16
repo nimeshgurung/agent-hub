@@ -149,7 +149,7 @@ function closeAddDialog() {
 
 (window as any).closeAddDialog = closeAddDialog;
 
-function showEditDialog(catalog: CatalogRecord) {
+function showEditDialog(_catalog: CatalogRecord) {
   // Similar to add dialog but with existing values
   alert('Edit functionality not yet implemented');
 }
@@ -181,13 +181,14 @@ window.addEventListener('message', (event) => {
       catalogs = catalogs.filter(c => c.id !== message.catalogId);
       renderCatalogs();
       break;
-    case 'catalogUpdated':
+    case 'catalogUpdated': {
       const index = catalogs.findIndex(c => c.id === message.catalog.id);
       if (index !== -1) {
         catalogs[index] = message.catalog;
         renderCatalogs();
       }
       break;
+    }
   }
 });
 

@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { runMigrations } from './migrations';
+import { initializeSchema } from './migrations';
 
 export class DatabaseService {
   private db: Database.Database | null = null;
@@ -19,8 +19,8 @@ export class DatabaseService {
     // Open database
     this.db = new Database(this.dbPath);
 
-    // Run migrations
-    runMigrations(this.db);
+    // Initialize schema
+    initializeSchema(this.db);
   }
 
   getDb(): Database.Database {

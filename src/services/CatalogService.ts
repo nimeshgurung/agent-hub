@@ -185,8 +185,8 @@ export class CatalogService {
       INSERT INTO artifacts (
         id, catalog_id, type, name, description, path, version, category,
         tags, keywords, language, framework, use_case, difficulty,
-        source_url, metadata, author, compatibility, dependencies, estimated_time
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        source_url, metadata, author, compatibility, dependencies, supporting_files, estimated_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const artifact of catalog.artifacts) {
@@ -212,6 +212,7 @@ export class CatalogService {
         JSON.stringify(artifact.author || null),
         JSON.stringify(artifact.compatibility || null),
         JSON.stringify(artifact.dependencies || []),
+        JSON.stringify(artifact.supportingFiles || []),
         artifact.estimatedTime || null
       );
     }

@@ -35,6 +35,7 @@ export type ExtensionMessage =
   | { type: 'catalogAdded'; catalog: CatalogRecord }
   | { type: 'catalogRemoved'; catalogId: string }
   | { type: 'catalogUpdated'; catalog: CatalogRecord }
+  | { type: 'catalogsUpdated' }
   | { type: 'previewContent'; content: string; artifact: ArtifactWithSource }
   | { type: 'connectionTest'; success: boolean; error?: string }
   | { type: 'categories'; categories: string[] }

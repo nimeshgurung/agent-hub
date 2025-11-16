@@ -334,13 +334,13 @@ export class ArtifactService {
     }
 
     // Fallback: try to extract base URL
-    const match = sourceUrl.match(/^(https?:\/\/[^\/]+\/[^\/]+\/[^\/]+\/-\/raw\/[^\/]+)/);
+    const match = sourceUrl.match(/^(https?:\/\/[^/]+\/[^/]+\/[^/]+\/-\/raw\/[^/]+)/);
     if (match) {
       return match[1];
     }
 
     // GitHub fallback
-    const ghMatch = sourceUrl.match(/^(https?:\/\/raw\.githubusercontent\.com\/[^\/]+\/[^\/]+\/[^\/]+)/);
+    const ghMatch = sourceUrl.match(/^(https?:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^/]+)/);
     if (ghMatch) {
       return ghMatch[1];
     }

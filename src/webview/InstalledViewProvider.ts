@@ -7,6 +7,8 @@ import type { WebviewMessage } from './common/ipc';
 import { Configuration } from '../config/configuration';
 
 export class InstalledViewProvider implements vscode.WebviewViewProvider {
+  private webviewView?: vscode.WebviewView;
+
   constructor(
     private context: vscode.ExtensionContext,
     private artifactService: ArtifactService,
@@ -19,6 +21,8 @@ export class InstalledViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ): void | Thenable<void> {
+    this.webviewView = webviewView;
+
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
@@ -38,6 +42,15 @@ export class InstalledViewProvider implements vscode.WebviewViewProvider {
         vscode.window.showErrorMessage(error);
       }
     });
+  }
+
+  public async refreshInstalled() {
+    if (this.webviewView) {
+      const configs = this.config.getRepositories();
+      const updates = await this.updateService.checkForUpdates(configs);
+      const artifacts = this.updateService.getInstallationsWithUpdates(updates);
+      this.webviewView.webview.postMessage({ type: 'installedArtifacts', artifacts });
+    }
   }
 
   private async handleMessage(message: WebviewMessage, webview: vscode.Webview): Promise<void> {

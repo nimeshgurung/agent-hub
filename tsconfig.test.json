@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", ".vscode-test", "src/webview/**/*"]
+}
+

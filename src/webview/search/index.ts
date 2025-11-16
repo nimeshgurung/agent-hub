@@ -110,8 +110,6 @@ function renderAggregatedResults() {
     });
     updateResultsHeader(filteredArtifacts.length);
   }
-
-  syncPreviewState();
 }
 
 function updateResultsHeader(visibleCount: number) {
@@ -217,6 +215,10 @@ window.addEventListener('message', (event) => {
         vscode.postMessage({ command: 'showError', text: message.error });
       }
       break;
+    case 'catalogsUpdated':
+      // Refresh search results when catalogs are added/updated
+      handleSearch();
+      break;
     case 'error':
       renderAggregatedResults();
       vscode.postMessage({ command: 'showError', text: message.message });
@@ -258,11 +260,6 @@ function formatNumber(num: number): string {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
   return num.toString();
-}
-
-function closePreview() {
-  previewPanel.style.display = 'none';
-  previewArtifact = null;
 }
 
 // Initialize when DOM is ready

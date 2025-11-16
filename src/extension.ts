@@ -105,6 +105,9 @@ export async function activate(context: vscode.ExtensionContext) {
         const repos = config.getRepositories();
         await config.setRepositories([...repos, catalogConfig]);
 
+        // Refresh search view to show new catalog artifacts
+        searchViewProvider.refreshSearch();
+
         vscode.window.showInformationMessage(`Added catalog: ${id}`);
       } catch (err) {
         const error = err instanceof Error ? err.message : 'Unknown error';
@@ -117,6 +120,10 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('artifact-hub.refreshCatalogs', async () => {
       const configs = config.getRepositories();
       await catalogService.refreshAll(configs);
+
+      // Refresh search view to show updated catalog artifacts
+      searchViewProvider.refreshSearch();
+
       vscode.window.showInformationMessage('Catalogs refreshed');
 
       updateStatusBar();

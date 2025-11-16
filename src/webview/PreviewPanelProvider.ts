@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import type { ArtifactWithSource } from '../models/types';
 import type { ArtifactService } from '../services/ArtifactService';
 import { Configuration } from '../config/configuration';

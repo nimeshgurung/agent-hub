@@ -265,6 +265,7 @@ export class SearchService {
       author: JSON.parse(row.author),
       compatibility: JSON.parse(row.compatibility),
       dependencies: JSON.parse(row.dependencies),
+      supportingFiles: row.supporting_files ? JSON.parse(row.supporting_files) : undefined,
       estimatedTime: row.estimated_time || undefined,
     };
   }

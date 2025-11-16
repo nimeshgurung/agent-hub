@@ -11,6 +11,7 @@ import { PreviewPanelProvider } from './PreviewPanelProvider';
 
 export class SearchViewProvider implements vscode.WebviewViewProvider {
   private previewPanel: PreviewPanelProvider;
+  private webviewView?: vscode.WebviewView;
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -28,6 +29,8 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ): void | Thenable<void> {
+    this.webviewView = webviewView;
+
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
@@ -46,6 +49,15 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.postMessage({ type: 'error', message: error });
       }
     });
+  }
+
+  public refreshSearch() {
+    if (this.webviewView) {
+      // Trigger a refresh by posting tags update
+      const tags = this.searchService.getAllTags();
+      this.webviewView.webview.postMessage({ type: 'tags', tags });
+      this.webviewView.webview.postMessage({ type: 'catalogsUpdated' });
+    }
   }
 
   private async handleMessage(message: WebviewMessage, webview: vscode.Webview): Promise<void> {
