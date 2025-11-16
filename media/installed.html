@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}};">
+  <link rel="stylesheet" href="{{cssUri}}">
+  <title>Installed Artifacts</title>
+</head>
+<body>
+  <div class="installed-container">
+    <div class="installed-header">
+      <h2>Installed Artifacts</h2>
+      <div class="header-actions">
+        <select id="groupBy">
+          <option value="type">Group by Type</option>
+          <option value="date">Sort by Date</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="installedContainer" class="installed-list">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>
+
+  <script src="{{scriptUri}}"></script>
+</body>
+</html>
+

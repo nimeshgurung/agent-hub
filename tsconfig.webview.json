@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM"]
+  },
+  "include": ["src/webview/**/*"],
+  "exclude": ["node_modules", ".vscode-test"]
+}
+

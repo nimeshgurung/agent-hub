@@ -1,0 +1,157 @@
+{
+  "name": "artifact-hub",
+  "displayName": "Artifact Hub",
+  "description": "Discover, install, and manage AI development artifacts from any Git platform",
+  "version": "0.1.2",
+  "publisher": "nimsbhai",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artifact-hub/artifact-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/artifact-hub/artifact-hub/issues"
+  },
+  "homepage": "https://artifact-hub.dev",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "ai",
+    "chatmode",
+    "prompts",
+    "instructions",
+    "artifacts",
+    "gitlab",
+    "github"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "artifact-hub",
+          "title": "Artifact Hub",
+          "icon": "resources/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "artifact-hub": [
+        {
+          "id": "artifact-hub.search",
+          "name": "Search",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "artifact-hub.search",
+        "title": "Search Artifacts",
+        "category": "Artifact Hub"
+      },
+      {
+        "command": "artifact-hub.install",
+        "title": "Install Artifact",
+        "category": "Artifact Hub"
+      },
+      {
+        "command": "artifact-hub.addRepository",
+        "title": "Add Repository",
+        "category": "Artifact Hub"
+      },
+      {
+        "command": "artifact-hub.refreshCatalogs",
+        "title": "Refresh Catalogs",
+        "category": "Artifact Hub"
+      }
+    ],
+    "configuration": {
+      "title": "Artifact Hub",
+      "properties": {
+        "artifactHub.repositories": {
+          "type": "array",
+          "default": [],
+          "description": "Configured catalog repositories",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "auth": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "artifactHub.autoUpdate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically check for catalog updates"
+        },
+        "artifactHub.updateInterval": {
+          "type": "number",
+          "default": 3600,
+          "description": "Catalog update interval in seconds"
+        },
+        "artifactHub.installRoot": {
+          "type": "string",
+          "default": ".github",
+          "description": "Root directory for artifact installation"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "package:vsix": "node scripts/package-vsix.js",
+    "publish:marketplace": "npm run build && npx dotenv -e .env -- vsce publish",
+    "test": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "npx @electron/rebuild -f -w better-sqlite3 -v 37.2.3"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.1",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.10.0",
+    "@types/semver": "^7.5.6",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^3.7.0",
+    "dotenv-cli": "^11.0.0",
+    "electron-rebuild": "^3.2.9",
+    "esbuild": "^0.19.0",
+    "eslint": "^8.54.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "better-sqlite3": "^12.4.1",
+    "semver": "^7.5.4",
+    "zod": "^3.22.4"
+  }
+}

@@ -1,0 +1,183 @@
+import * as vscode from 'vscode';
+import { DatabaseService } from './storage/Database';
+import { Configuration } from './config/configuration';
+import { HttpClient } from './services/HttpClient';
+import { UrlResolver } from './services/UrlResolver';
+import { AuthService } from './services/AuthService';
+import { CatalogService } from './services/CatalogService';
+import { SearchService } from './services/SearchService';
+import { ArtifactService } from './services/ArtifactService';
+import { UpdateService } from './services/UpdateService';
+import { StatusBarService } from './services/StatusBarService';
+// import { ProfileService } from './services/ProfileService'; // Reserved for future use
+import { SearchViewProvider } from './webview/SearchViewProvider';
+
+let refreshInterval: NodeJS.Timeout | null = null;
+
+export async function activate(context: vscode.ExtensionContext) {
+  console.log('Artifact Hub extension activating...');
+
+  // Initialize services
+  const config = new Configuration();
+  const db = new DatabaseService(context);
+  await db.initialize();
+
+  const http = new HttpClient();
+  const urlResolver = new UrlResolver();
+  const authService = new AuthService(context);
+  const catalogService = new CatalogService(db, http, urlResolver, authService);
+  const searchService = new SearchService(db);
+  const artifactService = new ArtifactService(db, http, authService, searchService);
+  const updateService = new UpdateService(db, searchService, http, authService);
+  const statusBarService = new StatusBarService();
+  // ProfileService available for future use
+  // const profileService = new ProfileService(artifactService, searchService);
+
+  // Register webview providers
+  const searchViewProvider = new SearchViewProvider(
+    context,
+    searchService,
+    artifactService,
+    http,
+    authService,
+    config
+  );
+
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('artifact-hub.search', searchViewProvider)
+  );
+
+  // Register commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('artifact-hub.search', () => {
+      vscode.commands.executeCommand('artifact-hub.search.focus');
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('artifact-hub.addRepository', async () => {
+      const url = await vscode.window.showInputBox({
+        prompt: 'Enter catalog URL',
+        placeHolder: 'https://gitlab.com/org/repo/-/raw/main/copilot-catalog.json',
+        validateInput: (value) => {
+          try {
+            new URL(value);
+            return null;
+          } catch {
+            return 'Please enter a valid URL';
+          }
+        },
+      });
+
+      if (!url) return;
+
+      const id = await vscode.window.showInputBox({
+        prompt: 'Enter catalog ID',
+        value: generateIdFromUrl(url),
+        validateInput: (value) => {
+          if (!/^[a-z0-9-]+$/.test(value)) {
+            return 'ID can only contain lowercase letters, numbers, and hyphens';
+          }
+          return null;
+        },
+      });
+
+      if (!id) return;
+
+      const requiresAuth = await vscode.window.showQuickPick(['No', 'Yes'], {
+        placeHolder: 'Does this repository require authentication?',
+      });
+
+      try {
+        const catalogConfig = {
+          id,
+          url,
+          enabled: true,
+          auth: requiresAuth === 'Yes' ? { type: 'bearer' as const } : undefined,
+        };
+
+        if (requiresAuth === 'Yes') {
+          await authService.promptForToken(id, id);
+        }
+
+        await catalogService.addCatalog(catalogConfig);
+
+        const repos = config.getRepositories();
+        await config.setRepositories([...repos, catalogConfig]);
+
+        vscode.window.showInformationMessage(`Added catalog: ${id}`);
+      } catch (err) {
+        const error = err instanceof Error ? err.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to add catalog: ${error}`);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('artifact-hub.refreshCatalogs', async () => {
+      const configs = config.getRepositories();
+      await catalogService.refreshAll(configs);
+      vscode.window.showInformationMessage('Catalogs refreshed');
+
+      updateStatusBar();
+    })
+  );
+
+  // Update status bar
+  async function updateStatusBar() {
+    const installations = artifactService.getAllInstallations();
+    const configs = config.getRepositories();
+    const updates = await updateService.checkForUpdates(configs);
+
+    statusBarService.setArtifactCount(installations.length);
+    statusBarService.setUpdateCount(updates.length);
+  }
+
+  // Initial status bar update
+  updateStatusBar();
+
+  // Setup auto-refresh
+  if (config.getAutoUpdate()) {
+    const interval = config.getUpdateInterval() * 1000;
+    refreshInterval = setInterval(async () => {
+      const configs = config.getRepositories();
+      await catalogService.refreshAll(configs);
+      updateStatusBar();
+    }, interval);
+
+    context.subscriptions.push(
+      new vscode.Disposable(() => {
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
+      })
+    );
+  }
+
+  // Cleanup
+  context.subscriptions.push(statusBarService);
+  context.subscriptions.push(
+    new vscode.Disposable(() => {
+      db.close();
+    })
+  );
+
+  console.log('Artifact Hub extension activated');
+}
+
+export function deactivate() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+}
+
+function generateIdFromUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    const parts = urlObj.pathname.split('/').filter(p => p.length > 0);
+    return parts.slice(-3, -1).join('-').toLowerCase();
+  } catch {
+    return 'custom-catalog';
+  }
+}
+

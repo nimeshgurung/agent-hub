@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}};">
+  <link rel="stylesheet" href="{{cssUri}}">
+  <title>Repositories</title>
+</head>
+<body>
+  <div class="repositories-container">
+    <div class="repositories-header">
+      <h2>Repositories</h2>
+      <div class="header-actions">
+        <button id="refreshAll" class="btn-secondary">Refresh All</button>
+        <button id="addCatalog" class="btn-primary">+ Add Repository</button>
+      </div>
+    </div>
+
+    <div id="catalogsContainer" class="catalogs-list">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>
+
+  <div id="addDialog" class="dialog" style="display: none;"></div>
+
+  <script src="{{scriptUri}}"></script>
+</body>
+</html>
+
