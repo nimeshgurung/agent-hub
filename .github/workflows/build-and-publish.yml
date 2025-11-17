@@ -140,8 +140,10 @@ jobs:
       - prepare
       - build
     if: >
-      github.event_name == 'release' ||
-      (github.event_name == 'workflow_dispatch' && inputs.publish == 'true')
+      needs.build.result == 'success' && (
+        github.event_name == 'release' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true')
+      )
     runs-on: ubuntu-latest
     env:
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
