@@ -7,11 +7,10 @@ const root = path.resolve(__dirname, '..');
 const pkg = require(path.join(root, 'package.json'));
 const artifactsDir = path.join(root, 'artifacts');
 const nodeBinary = process.execPath;
-const npxBinary = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 function resolveVsceCli() {
   try {
-    return require.resolve('@vscode/vsce/out/vsce', { paths: [root] });
+    return require.resolve('@vscode/vsce/vsce', { paths: [root] });
   } catch (error) {
     return null;
   }
@@ -49,6 +48,9 @@ const targetSuffix = target ? `-${target}` : '';
 const vsixName = `${pkg.name}-${pkg.version}${targetSuffix}.vsix`;
 const outputPath = path.join(artifactsDir, vsixName);
 const vsceCli = resolveVsceCli();
+if (!vsceCli) {
+  throw new Error('Unable to resolve @vscode/vsce CLI. Run npm ci (with dev dependencies) before packaging.');
+}
 
 const run = (cmd, args, opts = {}) => {
   const result = spawnSync(cmd, args, {
@@ -76,12 +78,7 @@ try {
     vsceArgs.push('--target', target);
   }
 
-  if (vsceCli) {
-    run(nodeBinary, [vsceCli, ...vsceArgs]);
-  } else {
-    console.warn('warning: @vscode/vsce not found locally, falling back to npx vsce');
-    run(npxBinary, ['vsce', ...vsceArgs]);
-  }
+  run(nodeBinary, [vsceCli, ...vsceArgs]);
 
   console.log(`VSIX written to ${outputPath}`);
 } catch (error) {
