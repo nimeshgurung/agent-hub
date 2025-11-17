@@ -110,7 +110,18 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
         run: |
-          node -e "const fs=require('fs'); const path=require('path'); const pkg=require('./package.json'); const file=path.join('artifacts', `${pkg.name}-${pkg.version}-${process.env.TARGET}.vsix`); if(!fs.existsSync(file)){console.error('VSIX not found', file); process.exit(1);} fs.appendFileSync(process.env.GITHUB_OUTPUT, `file=${file}\\n`);"
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const pkg = require('./package.json');
+          const target = process.env.TARGET;
+          const file = path.join('artifacts', `${pkg.name}-${pkg.version}-${target}.vsix`);
+          if (!fs.existsSync(file)) {
+            console.error('VSIX not found', file);
+            process.exit(1);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `file=${file}\n`);
+          NODE
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
