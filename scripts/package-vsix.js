@@ -6,9 +6,39 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const pkg = require(path.join(root, 'package.json'));
 const artifactsDir = path.join(root, 'artifacts');
-const vsixName = `${pkg.name}-${pkg.version}.vsix`;
-const outputPath = path.join(artifactsDir, vsixName);
 const npxBinary = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+
+function parseArgs(argv) {
+  const options = {
+    target: undefined,
+    skipBuild: false,
+  };
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    switch (arg) {
+      case '--target':
+        options.target = argv[i + 1];
+        if (!options.target) {
+          throw new Error('Missing value for --target');
+        }
+        i += 1;
+        break;
+      case '--skip-build':
+        options.skipBuild = true;
+        break;
+      default:
+        throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  return options;
+}
+
+const { target, skipBuild } = parseArgs(process.argv.slice(2));
+const targetSuffix = target ? `-${target}` : '';
+const vsixName = `${pkg.name}-${pkg.version}${targetSuffix}.vsix`;
+const outputPath = path.join(artifactsDir, vsixName);
 
 const run = (cmd, args, opts = {}) => {
   const result = spawnSync(cmd, args, {
@@ -27,8 +57,16 @@ try {
     fs.rmSync(outputPath);
   }
 
-  run('npm', ['run', 'build']);
-  run(npxBinary, ['vsce', 'package', '--out', outputPath]);
+  if (!skipBuild) {
+    run('npm', ['run', 'build']);
+  }
+
+  const vsceArgs = ['vsce', 'package', '--out', outputPath];
+  if (target) {
+    vsceArgs.push('--target', target);
+  }
+
+  run(npxBinary, vsceArgs);
 
   console.log(`VSIX written to ${outputPath}`);
 } catch (error) {

@@ -1,0 +1,119 @@
+name: Build and Publish VSIX
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to the VS Code Marketplace
+        type: boolean
+        default: false
+  release:
+    types:
+      - published
+
+env:
+  NODE_VERSION: '20'
+  ELECTRON_VERSION: '37.2.3'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+          - os: windows-latest
+            target: win32-x64
+          - os: macos-14
+            target: darwin-arm64
+          - os: macos-13
+            target: darwin-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild better-sqlite3
+        run: node scripts/rebuild-native.js
+        env:
+          ELECTRON_TARGET: ${{ env.ELECTRON_VERSION }}
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Package VSIX
+        run: node scripts/package-vsix.js --target ${{ matrix.target }} --skip-build
+
+      - name: Locate VSIX
+        id: locate
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          node -e "const fs=require('fs'); const path=require('path'); const pkg=require('./package.json'); const file=path.join('artifacts', `${pkg.name}-${pkg.version}-${process.env.TARGET}.vsix`); if(!fs.existsSync(file)){console.error('VSIX not found', file); process.exit(1);} fs.appendFileSync(process.env.GITHUB_OUTPUT, `file=${file}\\n`);"
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ matrix.target }}
+          path: ${{ steps.locate.outputs.file }}
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: >
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish == 'true')
+    runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download VSIX artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./vsix
+
+      - name: Ensure VSCE_PAT secret is present
+        if: env.VSCE_PAT == ''
+        run: |
+          echo 'VSCE_PAT secret is required to publish' >&2
+          exit 1
+
+      - name: Publish to VS Code Marketplace
+        if: env.VSCE_PAT != ''
+        run: |
+          set -euo pipefail
+          shopt -s nullglob globstar
+          files=(vsix/**/*.vsix)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo 'No VSIX artifacts found' >&2
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            echo "Publishing ${file}"
+            npx vsce publish --packagePath "${file}"
+          done
+        shell: bash
+
