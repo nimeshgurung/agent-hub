@@ -10,7 +10,7 @@ export class StatusBarService {
       vscode.StatusBarAlignment.Right,
       100
     );
-    this.statusBarItem.command = 'artifact-hub.viewInstalled';
+    this.statusBarItem.command = 'agent-hub.viewInstalled';
     this.statusBarItem.show();
     this.update();
   }

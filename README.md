@@ -1,8 +1,35 @@
-# Artifact Hub
+# Agent Hub
 
 > **Discover, install, and manage AI development artifacts from any Git platform**
 
-Artifact Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, and profiles). Install artifacts with one click from GitHub, GitLab, or any Git platform.
+Agent Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, and profiles). Install artifacts with one click from GitHub, GitLab, or any Git platform.
+
+## Using with Agent Library
+
+Agent Library is a companion scaffold for publishing catalogs of artifacts (chatmodes, prompts, instructions, tasks) and hosting a browsable frontend. Use Agent Library to generate your `copilot-catalog.json`, then add that URL in Agent Hub to search and install artifacts in VS Code.
+
+- Agent Library repo: `https://github.com/your-org/agent-library` (see `docs/quickstart.md`)
+- Marketplace page for this extension: `https://marketplace.visualstudio.com/items?itemName=nimsbhai.agent-hub`
+
+Typical flow:
+1. In Agent Library: generate artifacts and `copilot-catalog.json` (GitHub/GitLab raw or frontend-hosted).
+2. In VS Code: Install Agent Hub and add your catalog URL (see “Managing Catalogs”).
+3. Search, preview, and install artifacts into your repository.
+
+Settings snippet:
+```json
+{
+  "agentHub.repositories": [
+    {
+      "id": "agent-library",
+      "url": "https://<your-host>/copilot-catalog.json",
+      "enabled": true
+    }
+  ]
+}
+```
+
+More details: see [`docs/with-agent-library.md`](docs/with-agent-library.md).
 
 ## Features
 
@@ -34,7 +61,7 @@ Artifact Hub is a VS Code extension that provides a marketplace for AI developme
 ### Installation
 
 1. Install the extension from the VS Code Marketplace
-2. Click the Artifact Hub icon in the Activity Bar
+2. Click the Agent Hub icon in the Activity Bar
 3. Add a catalog repository
 
 ### Managing Catalogs
@@ -57,7 +84,7 @@ GitLab:  https://gitlab.com/org/repo/-/raw/main/copilot-catalog.json
 You can remove a catalog in two ways:
 
 1. **From the Repositories view**: Click the **Remove** button on any repository card
-2. **From the Command Palette**: Run `Artifact Hub: Remove Repository` and select from the list
+2. **From the Command Palette**: Run `Agent Hub: Remove Repository` and select from the list
 
 When you remove a repository, the extension will:
 - Prompt for confirmation if there are installed artifacts from that repository
@@ -115,18 +142,18 @@ See [`examples/sample-catalog.json`](examples/sample-catalog.json) for a complet
 
 ### Settings
 
-- `artifactHub.repositories`: List of configured catalog repositories
-- `artifactHub.autoUpdate`: Automatically check for catalog updates (default: `true`)
-- `artifactHub.updateInterval`: Update check interval in seconds (default: `3600`)
-- `artifactHub.installRoot`: Root directory for installations (default: `.github`)
+- `agentHub.repositories`: List of configured catalog repositories
+- `agentHub.autoUpdate`: Automatically check for catalog updates (default: `true`)
+- `agentHub.updateInterval`: Update check interval in seconds (default: `3600`)
+- `agentHub.installRoot`: Root directory for installations (default: `.github`)
 
 ### Commands
 
-- `Artifact Hub: Search Artifacts` - Open search view
-- `Artifact Hub: View Installed Artifacts` - View installed artifacts
-- `Artifact Hub: Add Repository` - Add a new catalog
-- `Artifact Hub: Remove Repository` - Remove a catalog and its installed artifacts
-- `Artifact Hub: Refresh Catalogs` - Refresh all catalogs
+- `Agent Hub: Search Artifacts` - Open search view
+- `Agent Hub: View Installed Artifacts` - View installed artifacts
+- `Agent Hub: Add Repository` - Add a new catalog
+- `Agent Hub: Remove Repository` - Remove a catalog and its installed artifacts
+- `Agent Hub: Refresh Catalogs` - Refresh all catalogs
 
 ## Authentication
 
@@ -143,7 +170,7 @@ Reference environment variables in your settings:
 
 ```json
 {
-  "artifactHub.repositories": [
+  "agentHub.repositories": [
     {
       "id": "private-catalog",
       "url": "https://gitlab.company.com/...",
@@ -209,4 +236,9 @@ MIT © Artifact Hub
 ---
 
 **Enjoy using Artifact Hub!** ⭐
+
+## Screenshots (placeholders)
+- Repositories view with an Agent Library catalog added (docs/images/repos-view.png)
+- Search results showing multiple artifacts (docs/images/search-results.png)
+- Artifact detail with one-click install (docs/images/artifact-detail.png)
 

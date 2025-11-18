@@ -17,7 +17,7 @@ import { RepositoriesViewProvider } from './webview/RepositoriesViewProvider';
 let refreshInterval: NodeJS.Timeout | null = null;
 
 export async function activate(context: vscode.ExtensionContext) {
-  console.log('Artifact Hub extension activating...');
+  console.log('Agent Hub extension activating...');
 
   // Initialize services
   const config = new Configuration();
@@ -81,20 +81,20 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider('artifact-hub.search', searchViewProvider),
-    vscode.window.registerWebviewViewProvider('artifact-hub.installed', installedViewProvider),
-    vscode.window.registerWebviewViewProvider('artifact-hub.repositories', repositoriesViewProvider)
+    vscode.window.registerWebviewViewProvider('agent-hub.search', searchViewProvider),
+    vscode.window.registerWebviewViewProvider('agent-hub.installed', installedViewProvider),
+    vscode.window.registerWebviewViewProvider('agent-hub.repositories', repositoriesViewProvider)
   );
 
   // Register commands
   context.subscriptions.push(
-    vscode.commands.registerCommand('artifact-hub.search', () => {
-      vscode.commands.executeCommand('artifact-hub.search.focus');
+    vscode.commands.registerCommand('agent-hub.search', () => {
+      vscode.commands.executeCommand('agent-hub.search.focus');
     })
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('artifact-hub.addRepository', async () => {
+    vscode.commands.registerCommand('agent-hub.addRepository', async () => {
       const url = await vscode.window.showInputBox({
         prompt: 'Enter catalog URL',
         placeHolder: 'https://gitlab.com/org/repo/-/raw/main/copilot-catalog.json',
@@ -156,7 +156,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('artifact-hub.removeRepository', async () => {
+    vscode.commands.registerCommand('agent-hub.removeRepository', async () => {
       const configs = config.getRepositories();
 
       if (configs.length === 0) {
@@ -199,7 +199,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('artifact-hub.refreshCatalogs', async () => {
+    vscode.commands.registerCommand('agent-hub.refreshCatalogs', async () => {
       const configs = config.getRepositories();
       await catalogService.refreshAll(configs);
 
@@ -251,7 +251,7 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  console.log('Artifact Hub extension activated');
+  console.log('Agent Hub extension activated');
 }
 
 export function deactivate() {

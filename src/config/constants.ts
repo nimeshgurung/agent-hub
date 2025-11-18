@@ -1,8 +1,8 @@
 export const CONFIG_KEYS = {
-  REPOSITORIES: 'artifactHub.repositories',
-  AUTO_UPDATE: 'artifactHub.autoUpdate',
-  UPDATE_INTERVAL: 'artifactHub.updateInterval',
-  INSTALL_ROOT: 'artifactHub.installRoot',
+  REPOSITORIES: 'agentHub.repositories',
+  AUTO_UPDATE: 'agentHub.autoUpdate',
+  UPDATE_INTERVAL: 'agentHub.updateInterval',
+  INSTALL_ROOT: 'agentHub.installRoot',
 } as const;
 
 export const DEFAULTS = {
@@ -16,7 +16,7 @@ export const ARTIFACT_PATHS = {
   instructions: 'instructions',
   prompt: 'prompts',
   task: 'tasks',
-  profile: '../.vscode/artifact-hub/profiles',
+  profile: '../.vscode/agent-hub/profiles',
 } as const;
 
 export const ARTIFACT_EXTENSIONS = {

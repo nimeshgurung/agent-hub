@@ -1,4 +1,4 @@
-# Artifact Hub - Development Setup Guide
+# Agent Hub - Development Setup Guide
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ npm run watch
 
 - Set breakpoints in TypeScript files
 - Use the Debug Console to inspect variables
-- Check the Output panel (select "Artifact Hub" from the dropdown)
+- Check the Output panel (select "Agent Hub" from the dropdown)
 
 ## Project Structure
 
@@ -91,14 +91,14 @@ suite('MyService Test Suite', () => {
 
 The extension uses SQLite with better-sqlite3 for local storage:
 
-- **Location**: `~/.vscode/extensions/<extension-id>/globalStorage/artifact-hub/artifacts.db`
+- **Location**: `~/.vscode/extensions/<extension-id>/globalStorage/agent-hub/artifacts.db`
 - **Schema**: Defined in `src/storage/migrations.ts`
 - **Migrations**: Run automatically on extension activation
 
 ### Inspecting the database
 
 ```bash
-sqlite3 ~/.vscode/extensions/<extension-id>/globalStorage/artifact-hub/artifacts.db
+sqlite3 ~/.vscode/extensions/<extension-id>/globalStorage/agent-hub/artifacts.db
 
 # List tables
 .tables
@@ -170,7 +170,7 @@ This creates a `.vsix` file that can be:
 
 ### Extension doesn't activate
 
-- Check the Output panel (select "Artifact Hub")
+- Check the Output panel (select "Agent Hub")
 - Look for errors in the Developer Tools Console (`Help > Toggle Developer Tools`)
 
 ### Database errors

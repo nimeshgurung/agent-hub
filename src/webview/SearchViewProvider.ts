@@ -148,7 +148,7 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
 
       case 'openAddRepository': {
         try {
-          await vscode.commands.executeCommand('artifact-hub.addRepository');
+          await vscode.commands.executeCommand('agent-hub.addRepository');
         } catch (err) {
           const error = err instanceof Error ? err.message : 'Failed to open repository dialog';
           webview.postMessage({ type: 'error', message: error });

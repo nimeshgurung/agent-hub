@@ -131,7 +131,7 @@ export class RepositoriesViewProvider implements vscode.WebviewViewProvider {
 
       case 'openAddRepository': {
         try {
-          await vscode.commands.executeCommand('artifact-hub.addRepository');
+          await vscode.commands.executeCommand('agent-hub.addRepository');
           await this.notifyCatalogsChanged(webview);
         } catch (err) {
           const error = err instanceof Error ? err.message : 'Failed to open add repository flow';

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { AuthConfig } from '../models/types';
 
 export class AuthService {
-  private static readonly SECRET_KEY_PREFIX = 'artifact-hub.auth';
+  private static readonly SECRET_KEY_PREFIX = 'agent-hub.auth';
 
   constructor(private context: vscode.ExtensionContext) {}
 

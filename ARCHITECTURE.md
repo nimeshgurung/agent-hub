@@ -1,8 +1,8 @@
-# Artifact Hub - Architecture Documentation
+# Agent Hub - Architecture Documentation
 
 ## Overview
 
-Artifact Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, tasks, and profiles). It allows users to discover, install, and manage artifacts from multiple Git-based catalog repositories.
+Agent Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, tasks, and profiles). It allows users to discover, install, and manage artifacts from multiple Git-based catalog repositories.
 
 ## High-Level Architecture
 

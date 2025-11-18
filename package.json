@@ -1,6 +1,6 @@
 {
-  "name": "artifact-hub",
-  "displayName": "Artifact Hub",
+  "name": "agent-hub",
+  "displayName": "Agent Hub",
   "description": "Discover, install, and manage AI development artifacts from any Git platform",
   "version": "0.1.7",
   "publisher": "nimsbhai",
@@ -39,26 +39,26 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "artifact-hub",
-          "title": "Artifact Hub",
+          "id": "agent-hub",
+          "title": "Agent Hub",
           "icon": "resources/icon.png"
         }
       ]
     },
     "views": {
-      "artifact-hub": [
+      "agent-hub": [
         {
-          "id": "artifact-hub.search",
+          "id": "agent-hub.search",
           "name": "Search",
           "type": "webview"
         },
         {
-          "id": "artifact-hub.installed",
+          "id": "agent-hub.installed",
           "name": "Installed",
           "type": "webview"
         },
         {
-          "id": "artifact-hub.repositories",
+          "id": "agent-hub.repositories",
           "name": "Repositories",
           "type": "webview"
         }
@@ -66,35 +66,35 @@
     },
     "commands": [
       {
-        "command": "artifact-hub.search",
+        "command": "agent-hub.search",
         "title": "Search Artifacts",
-        "category": "Artifact Hub"
+        "category": "Agent Hub"
       },
       {
-        "command": "artifact-hub.install",
+        "command": "agent-hub.install",
         "title": "Install Artifact",
-        "category": "Artifact Hub"
+        "category": "Agent Hub"
       },
       {
-        "command": "artifact-hub.addRepository",
+        "command": "agent-hub.addRepository",
         "title": "Add Repository",
-        "category": "Artifact Hub"
+        "category": "Agent Hub"
       },
       {
-        "command": "artifact-hub.removeRepository",
+        "command": "agent-hub.removeRepository",
         "title": "Remove Repository",
-        "category": "Artifact Hub"
+        "category": "Agent Hub"
       },
       {
-        "command": "artifact-hub.refreshCatalogs",
+        "command": "agent-hub.refreshCatalogs",
         "title": "Refresh Catalogs",
-        "category": "Artifact Hub"
+        "category": "Agent Hub"
       }
     ],
     "configuration": {
-      "title": "Artifact Hub",
+      "title": "Agent Hub",
       "properties": {
-        "artifactHub.repositories": {
+        "agentHub.repositories": {
           "type": "array",
           "default": [],
           "description": "Configured catalog repositories",
@@ -116,17 +116,17 @@
             }
           }
         },
-        "artifactHub.autoUpdate": {
+        "agentHub.autoUpdate": {
           "type": "boolean",
           "default": true,
           "description": "Automatically check for catalog updates"
         },
-        "artifactHub.updateInterval": {
+        "agentHub.updateInterval": {
           "type": "number",
           "default": 3600,
           "description": "Catalog update interval in seconds"
         },
-        "artifactHub.installRoot": {
+        "agentHub.installRoot": {
           "type": "string",
           "default": ".github",
           "description": "Root directory for artifact installation"

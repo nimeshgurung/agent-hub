@@ -207,7 +207,17 @@ export class CatalogService {
 
   private async fetchCatalog(url: string, auth?: AuthConfig): Promise<Catalog> {
     try {
-      const data = await this.http.fetchJson<unknown>(url, { auth });
+      // Fetch raw text to allow placeholder replacement before validation
+      const raw = await this.http.fetchText(url, { auth });
+      const origin = new URL(url).origin;
+      const baseUrl = url;
+
+      const replaced = raw
+        .replaceAll('__CATALOG_URL__', baseUrl)
+        .replaceAll('__ORIGIN__', origin)
+        .replaceAll('window.origin', origin);
+
+      const data: unknown = JSON.parse(replaced);
       return CatalogSchema.parse(data);
     } catch (err) {
       if (err instanceof ZodError) {
