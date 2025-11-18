@@ -102,6 +102,7 @@ jobs:
         run: node scripts/rebuild-native.js
         env:
           ELECTRON_TARGET: ${{ env.ELECTRON_VERSION }}
+          VSCE_TARGET: ${{ matrix.target }}
 
       - name: Build extension
         run: npm run build

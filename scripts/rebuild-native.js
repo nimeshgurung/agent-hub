@@ -8,11 +8,22 @@ const { execSync } = require('child_process');
 const path = require('path');
 
 const ELECTRON_VERSION = process.env.ELECTRON_TARGET || '37.2.3';
+const VSCE_TARGET = process.env.VSCE_TARGET || '';
 const npmBinary = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
-const rebuildCommand = `${npmBinary} @electron/rebuild -f -w better-sqlite3 -v ${ELECTRON_VERSION}`;
+// Map VSCE target to electron-rebuild arch
+const archMap = {
+  'darwin-x64': 'x64',
+  'darwin-arm64': 'arm64',
+  'win32-x64': 'x64',
+  'linux-x64': 'x64',
+};
 
-console.log(`Rebuilding better-sqlite3 against Electron ${ELECTRON_VERSION}...`);
+const targetArch = archMap[VSCE_TARGET] || process.arch;
+const archFlag = targetArch ? ` --arch ${targetArch}` : '';
+const rebuildCommand = `${npmBinary} @electron/rebuild -f -w better-sqlite3 -v ${ELECTRON_VERSION}${archFlag}`;
+
+console.log(`Rebuilding better-sqlite3 against Electron ${ELECTRON_VERSION} for ${targetArch}...`);
 try {
   execSync(rebuildCommand, {
     stdio: 'inherit',
