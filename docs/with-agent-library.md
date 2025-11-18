@@ -52,7 +52,7 @@ Or add via settings:
 ```json
 {
   "agentHub.repositories": [
-    { "id": "agent-library", "url": "https://<your-host>/copilot-catalog.json", "enabled": true }
+    { "id": "agent-library", "url": "https://nimeshgurung.github.io/agent-library/copilot-catalog.json", "enabled": true }
   ]
 }
 ```
@@ -85,8 +85,8 @@ If your catalog doesn’t load in VS Code or the frontend, check:
 - That the catalog was rebuilt after adding artifacts
 
 ## Cross-References
-- Agent Library Quickstart: `agent-library/docs/quickstart.md`
-- Agent Library Hosting: `agent-library/docs/catalogs-and-hosting.md`
+- Agent Library Quickstart: [`agent-library/docs/quickstart.md`](https://github.com/nimeshgurung/agent-library/blob/main/docs/quickstart.md)
+- Agent Library Hosting: [`agent-library/docs/catalogs-and-hosting.md`](https://github.com/nimeshgurung/agent-library/blob/main/docs/catalogs-and-hosting.md)
 - Extension Marketplace: `https://marketplace.visualstudio.com/items?itemName=nimsbhai.agent-hub`
 
 

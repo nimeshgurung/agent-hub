@@ -7,10 +7,10 @@
   "icon": "resources/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/artifact-hub/artifact-hub.git"
+    "url": "https://github.com/nimeshgurung/agent-hub.git"
   },
   "bugs": {
-    "url": "https://github.com/artifact-hub/artifact-hub/issues"
+    "url": "https://github.com/nimeshgurung/agent-hub/issues"
   },
   "homepage": "https://artifact-hub.dev",
   "engines": {

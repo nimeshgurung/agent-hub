@@ -8,7 +8,7 @@ Agent Hub is a VS Code extension that provides a marketplace for AI development 
 
 Agent Library is a companion scaffold for publishing catalogs of artifacts (chatmodes, prompts, instructions, tasks) and hosting a browsable frontend. Use Agent Library to generate your `copilot-catalog.json`, then add that URL in Agent Hub to search and install artifacts in VS Code.
 
-- Agent Library repo: `https://github.com/your-org/agent-library` (see `docs/quickstart.md`)
+- Agent Library repo: `https://github.com/nimeshgurung/agent-library` (see `docs/quickstart.md`)
 - Marketplace page for this extension: `https://marketplace.visualstudio.com/items?itemName=nimsbhai.agent-hub`
 
 Typical flow:
@@ -22,7 +22,7 @@ Settings snippet:
   "agentHub.repositories": [
     {
       "id": "agent-library",
-      "url": "https://<your-host>/copilot-catalog.json",
+      "url": "https://nimeshgurung.github.io/agent-library/copilot-catalog.json",
       "enabled": true
     }
   ]
@@ -229,9 +229,9 @@ MIT © Artifact Hub
 
 ## Support
 
-- 📖 [Documentation](https://artifact-hub.dev/docs)
-- 💬 [Discussions](https://github.com/artifact-hub/artifact-hub/discussions)
-- 🐛 [Issue Tracker](https://github.com/artifact-hub/artifact-hub/issues)
+- 📖 [Documentation](https://github.com/nimeshgurung/agent-hub/tree/main/docs)
+- 💬 [Discussions](https://github.com/nimeshgurung/agent-hub/discussions)
+- 🐛 [Issue Tracker](https://github.com/nimeshgurung/agent-hub/issues)
 
 ---
 
