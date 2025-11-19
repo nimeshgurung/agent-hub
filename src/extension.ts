@@ -35,6 +35,14 @@ export async function activate(context: vscode.ExtensionContext) {
   // ProfileService available for future use
   // const profileService = new ProfileService(artifactService, searchService);
 
+  // Register URI handler for deep links (vscode://publisher.extension-id/...)
+  const uriHandler = vscode.window.registerUriHandler({
+    handleUri: async (uri: vscode.Uri) => {
+      await handleDeepLink(uri, artifactService, searchService, catalogService, config);
+    },
+  });
+  context.subscriptions.push(uriHandler);
+
   const refreshInstalledAndStatus = async () => {
     await installedViewProvider?.refreshInstalled();
     await updateStatusBar();
@@ -268,5 +276,136 @@ function generateIdFromUrl(url: string): string {
   } catch {
     return 'custom-catalog';
   }
+}
+
+/**
+ * Handle deep links from web (vscode://publisher.extension-id/installArtifact?...)
+ */
+async function handleDeepLink(
+  uri: vscode.Uri,
+  artifactService: ArtifactService,
+  searchService: SearchService,
+  catalogService: CatalogService,
+  config: Configuration
+): Promise<void> {
+  try {
+    const path = uri.path;
+    const query = new URLSearchParams(uri.query);
+
+    console.log('Deep link received:', { path, query: query.toString() });
+
+    if (path === '/installArtifact' || path === '/installArtifact/') {
+      await handleInstallArtifact(query, artifactService, searchService, catalogService, config);
+    } else {
+      vscode.window.showWarningMessage(`Unknown Agent Hub deep link action: ${path}`);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    vscode.window.showErrorMessage(`Failed to handle deep link: ${message}`);
+    console.error('Deep link error:', error);
+  }
+}
+
+/**
+ * Handle installArtifact deep link
+ */
+async function handleInstallArtifact(
+  query: URLSearchParams,
+  artifactService: ArtifactService,
+  searchService: SearchService,
+  catalogService: CatalogService,
+  config: Configuration
+): Promise<void> {
+  const artifactType = query.get('artifactType');
+  const artifactId = query.get('artifactId');
+  const catalogRepoUrl = query.get('catalogRepoUrl');
+  const catalogPath = query.get('catalogPath') || 'copilot-catalog.json';
+  const source = query.get('source') || 'unknown';
+
+  if (!artifactType || !artifactId) {
+    vscode.window.showErrorMessage('Invalid install link: missing artifactType or artifactId');
+    return;
+  }
+
+  console.log('Install artifact request:', {
+    artifactType,
+    artifactId,
+    catalogRepoUrl,
+    catalogPath,
+    source,
+  });
+
+  // Step 1: Ensure the catalog is added
+  if (catalogRepoUrl) {
+    await ensureCatalogExists(catalogRepoUrl, catalogPath, catalogService, config);
+  }
+
+  // Step 2: Find the artifact in the search index
+  const searchResult = searchService.search({ query: artifactId, type: artifactType as any });
+  const artifact = searchResult.artifacts.find((a) => a.id === artifactId);
+
+  if (!artifact) {
+    vscode.window.showErrorMessage(
+      `Could not find artifact "${artifactId}" of type "${artifactType}". Make sure the catalog is loaded.`
+    );
+    return;
+  }
+
+  // Step 3: Install the artifact
+  const installRoot = config.getInstallRoot();
+  const repoConfig = config.getRepositories().find((r) => artifact.catalogId === r.id);
+
+  const result = await artifactService.install(artifact, installRoot, repoConfig);
+
+  if (result.success) {
+    vscode.window.showInformationMessage(
+      `Installed ${artifactType} "${artifact.name}" from Agent Library`
+    );
+  } else {
+    vscode.window.showErrorMessage(`Failed to install ${artifactType}: ${result.error}`);
+  }
+}
+
+/**
+ * Ensure a catalog exists in the Agent Hub, prompting to add it if missing
+ */
+async function ensureCatalogExists(
+  catalogUrl: string,
+  catalogPath: string,
+  catalogService: CatalogService,
+  config: Configuration
+): Promise<void> {
+  const repos = config.getRepositories();
+  const existing = repos.find((r) => r.url === catalogUrl);
+
+  if (existing) {
+    console.log('Catalog already configured:', existing.id);
+    return;
+  }
+
+  // Catalog not found, prompt user to add it
+  const answer = await vscode.window.showInformationMessage(
+    `The Agent Library catalog is not installed. Would you like to add it now?\n\nURL: ${catalogUrl}`,
+    'Add Catalog',
+    'Cancel'
+  );
+
+  if (answer !== 'Add Catalog') {
+    throw new Error('User declined to add catalog');
+  }
+
+  // Generate a catalog ID from the URL
+  const catalogId = generateIdFromUrl(catalogUrl);
+
+  const catalogConfig = {
+    id: catalogId,
+    url: catalogUrl,
+    enabled: true,
+  };
+
+  await catalogService.addCatalog(catalogConfig);
+  await config.setRepositories([...repos, catalogConfig]);
+
+  vscode.window.showInformationMessage(`Added catalog: ${catalogId}`);
 }
 

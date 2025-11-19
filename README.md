@@ -1,5 +1,7 @@
 # Agent Hub
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/nimsbhai.agent-hub?label=Install%20from%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=nimsbhai.agent-hub)
+
 > **Discover, install, and manage AI development artifacts from any Git platform**
 
 Agent Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, tasks, profiles, and agent packs). Install artifacts with one click from GitHub, GitLab, or any Git platform.
