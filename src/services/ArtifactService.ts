@@ -353,7 +353,34 @@ export class ArtifactService {
             // dropping the "resources/" prefix. This is how we support layouts
             // like ".specify/..." or other top-level folders inside an agent pack.
             const innerPath = relativePath.substring('resources/'.length);
+            const firstSegment = innerPath.split('/')[0] || '';
+
+            // Alias support:
+            // - resources/prompts/**   -> <workspace>/.github/prompts/**
+            // - resources/agents/**    -> <workspace>/.github/agents/**
+            // - resources/chatmodes/** -> <workspace>/.github/chatmodes/**
+            // - resources/instructions/** -> <workspace>/.github/instructions/**
+            // - resources/tasks/**     -> <workspace>/.github/tasks/**
+            // - resources/profiles/**  -> <workspace>/.github/profiles/**
+            // Legacy still works:
+            // - resources/.github/**   -> <workspace>/.github/**
+            // Additional:
+            // - resources/vscode/**    -> <workspace>/.vscode/**
+            if (
+              firstSegment === 'prompts' ||
+              firstSegment === 'agents' ||
+              firstSegment === 'chatmodes' ||
+              firstSegment === 'instructions' ||
+              firstSegment === 'tasks' ||
+              firstSegment === 'profiles'
+            ) {
+              targetPath = path.join(workspaceRoot, '.github', innerPath);
+            } else if (firstSegment === 'vscode') {
+              const vscodeInner = innerPath.substring('vscode/'.length);
+              targetPath = path.join(workspaceRoot, '.vscode', vscodeInner);
+            } else {
             targetPath = path.join(workspaceRoot, innerPath);
+            }
           } else if (relativePath.startsWith('.vscode/')) {
             // Workspace-level VS Code settings always live at the workspace root
             targetPath = path.join(workspaceRoot, relativePath);
@@ -412,14 +439,33 @@ export class ArtifactService {
           if (relativePath.startsWith('resources/')) {
             // Mirror of install logic: resources/<path> was projected into workspace root.
             const innerPath = relativePath.substring('resources/'.length);
+            const firstSegment = innerPath.split('/')[0] || '';
+            if (firstSegment === 'prompts' || firstSegment === 'agents') {
+              // Alias roots were installed under .github/
+              targetPath = path.join(workspaceRoot, '.github', innerPath);
+            } else if (firstSegment === 'vscode') {
+              const vscodeInner = innerPath.substring('vscode/'.length);
+              targetPath = path.join(workspaceRoot, '.vscode', vscodeInner);
+            } else {
             targetPath = path.join(workspaceRoot, innerPath);
+            }
 
             // Track the top-level directory under resources (e.g. ".specify", ".engine-x").
             // We will prune these roots after file deletion, except for global folders
             // like ".github" and ".vscode" which may be shared.
             const segments = innerPath.split('/');
             const root = segments[0] || '';
-            if (root && root !== '.github' && root !== '.vscode') {
+            if (
+              root &&
+              root !== '.github' &&
+              root !== '.vscode' &&
+              root !== 'prompts' &&
+              root !== 'agents' &&
+              root !== 'chatmodes' &&
+              root !== 'instructions' &&
+              root !== 'tasks' &&
+              root !== 'profiles'
+            ) {
               agentResourceRoots.add(root);
             }
           } else if (relativePath.startsWith('.vscode/')) {
