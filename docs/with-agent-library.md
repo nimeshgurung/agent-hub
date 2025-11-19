@@ -18,7 +18,7 @@ npm run generate:chatmode
 npm run generate:prompt
 npm run generate:instructions
 npm run generate:task
-npm run generate:bundle   # optional: directory-based bundles that can contain multiple artifacts/resources
+npm run generate:agent   # optional: directory-based agent packs that can contain multiple artifacts/resources
 ```
 
 Build catalog + frontend:
@@ -62,7 +62,11 @@ Or add via settings:
 Use the Search view to find artifacts. Click **Preview** to inspect, then **Install** to add to your workspace.
 
 - Standard artifacts are installed under `.github/…` in your repo.
-- Bundles are installed as a folder at the workspace root (for example `./spec-kit`), with their internal structure (`.github/agents`, `.github/prompts`, templates, scripts, etc.) preserved. If the bundle ships a `.vscode/settings.json`, it is applied at the workspace root.
+- Agent packs are installed with a hidden definition file under `.github/.agent-hub/agents/<id>/`, while their resources are projected into your workspace root:
+  - Files under `resources/.github/agents` → `.github/agents/`
+  - Files under `resources/.github/prompts` → `.github/prompts/`
+  - `.vscode/settings.json` (if shipped) → `.vscode/settings.json` at workspace root
+  - Other resources (like `.specify/`) are projected to the workspace root
 
 ## 5) Private catalogs
 Use PAT/Bearer tokens and environment variables in settings:

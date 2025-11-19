@@ -84,7 +84,7 @@ export class ArtifactService {
 
     // Try to load artifact definition so we can clean up supporting files correctly.
     // If the catalog has been removed or the artifact is missing, we still best-effort
-    // delete the main path and bundle directory (if any).
+    // delete the main path and agent directory (if any).
     const artifact = this.searchService.getArtifact(catalogId, artifactId);
 
     // Prompt for confirmation
@@ -106,27 +106,27 @@ export class ArtifactService {
       // Continue anyway to remove supporting files and from DB
     }
 
-    // If this looks like a bundle installation (…/<artifactId>/README.md),
-    // also delete the containing directory so we clean up the local bundle root.
+    // If this looks like an agent installation (…/<artifactId>/README.md),
+    // also delete the containing directory so we clean up the local agent root.
     try {
       const parentDir = path.dirname(installation.installedPath);
       if (path.basename(parentDir) === artifactId) {
         await this.deleteDirectoryIfExists(parentDir);
       }
 
-      // Additionally, clean up a bundle-specific resources folder at the workspace
+      // Additionally, clean up an agent-specific resources folder at the workspace
       // root (e.g. ".spec-kit") if the user has used that pattern. We never touch
-      // global folders like ".github", only the bundle-scoped ".[bundleId]" root.
+      // global folders like ".github", only the agent-scoped ".[agentId]" root.
       const workspaceRoot = this.getWorkspaceRootPath();
-      const bundleResourcesDir = path.join(workspaceRoot, `.${artifactId}`);
-      await this.deleteDirectoryIfExists(bundleResourcesDir);
+      const agentResourcesDir = path.join(workspaceRoot, `.${artifactId}`);
+      await this.deleteDirectoryIfExists(agentResourcesDir);
     } catch (err) {
-      console.error('Failed to delete bundle directory:', err);
+      console.error('Failed to delete agent directory:', err);
       // Non-fatal – continue cleanup
     }
 
     // Delete supporting files that were installed alongside the main artifact.
-    // For bundles, this includes resources projected into the workspace root
+    // For agents, this includes resources projected into the workspace root
     // (e.g. .specify, .github, .vscode). For other types, this is the hidden
     // .github/.<id> layout.
     if (artifact && artifact.supportingFiles && artifact.supportingFiles.length > 0) {
@@ -242,10 +242,10 @@ export class ArtifactService {
       cancellable: false
     }, async (progress) => {
       try {
-        // Download main artifact content for non-bundle types.
-        // For bundles, the main README is used for catalog/preview only and
+        // Download main artifact content for non-agent types.
+        // For agents, the main README is used for catalog/preview only and
         // does not need to be written into the user's workspace.
-        if (artifact.type !== 'bundle') {
+        if (artifact.type !== 'agent') {
           progress.report({
             increment: 0,
             message: `Downloading main file (1/${totalFiles})...`
@@ -319,12 +319,12 @@ export class ArtifactService {
 
     const workspaceRoot = this.getWorkspaceRootPath();
 
-    // For bundles, we want two behaviors:
+    // For agents, we want two behaviors:
     // - Files under "resources/..." (e.g., ".specify", ".github/agents", etc.) go under the workspace root
     //   with the "resources/" prefix dropped.
     // - Files under ".vscode/..." (e.g., ".vscode/settings.json") go at the workspace root.
     // For all other artifact types, we keep using the hidden .github/.<id> folder.
-    const bundleRootDir = path.dirname(mainFilePath);
+    const agentRootDir = path.dirname(mainFilePath);
     const legacySupportingDir = path.join(workspaceRoot, '.github', `.${artifact.id}`);
 
     let downloadedCount = startCount;
@@ -343,26 +343,26 @@ export class ArtifactService {
         const content = await this.http.fetchText(fileUrl, { auth });
 
         // Extract relative path from the supporting file path
-        // e.g., "bundles/<id>/.github/agents/foo.agent.md" -> ".github/agents/foo.agent.md"
+        // e.g., "agents/<id>/.github/agents/foo.agent.md" -> ".github/agents/foo.agent.md"
         const relativePath = this.extractRelativePath(filePath, artifact.id);
 
         let targetPath: string;
-        if (artifact.type === 'bundle') {
+        if (artifact.type === 'agent') {
           if (relativePath.startsWith('resources/')) {
             // Everything under resources/ is projected into the workspace root,
             // dropping the "resources/" prefix. This is how we support layouts
-            // like ".specify/..." or other top-level folders inside a bundle.
+            // like ".specify/..." or other top-level folders inside an agent pack.
             const innerPath = relativePath.substring('resources/'.length);
             targetPath = path.join(workspaceRoot, innerPath);
           } else if (relativePath.startsWith('.vscode/')) {
             // Workspace-level VS Code settings always live at the workspace root
             targetPath = path.join(workspaceRoot, relativePath);
           } else {
-            // All other bundle files live under ./<id>/
-            targetPath = path.join(bundleRootDir, relativePath);
+            // All other agent files live under ./<id>/
+            targetPath = path.join(agentRootDir, relativePath);
           }
         } else {
-          // Legacy behavior for non-bundle artifacts
+          // Legacy behavior for non-agent artifacts
           targetPath = path.join(legacySupportingDir, relativePath);
         }
 
@@ -399,16 +399,16 @@ export class ArtifactService {
     }
 
     const workspaceRoot = this.getWorkspaceRootPath();
-    const bundleRootDir = path.dirname(mainFilePath);
+    const agentRootDir = path.dirname(mainFilePath);
     const legacySupportingDir = path.join(workspaceRoot, '.github', `.${artifact.id}`);
-    const bundleResourceRoots = new Set<string>(); // track top-level resource roots for pruning
+    const agentResourceRoots = new Set<string>(); // track top-level resource roots for pruning
 
     for (const filePath of artifact.supportingFiles) {
       try {
         const relativePath = this.extractRelativePath(filePath, artifact.id);
 
         let targetPath: string;
-        if (artifact.type === 'bundle') {
+        if (artifact.type === 'agent') {
           if (relativePath.startsWith('resources/')) {
             // Mirror of install logic: resources/<path> was projected into workspace root.
             const innerPath = relativePath.substring('resources/'.length);
@@ -420,16 +420,16 @@ export class ArtifactService {
             const segments = innerPath.split('/');
             const root = segments[0] || '';
             if (root && root !== '.github' && root !== '.vscode') {
-              bundleResourceRoots.add(root);
+              agentResourceRoots.add(root);
             }
           } else if (relativePath.startsWith('.vscode/')) {
             targetPath = path.join(workspaceRoot, relativePath);
           } else {
-            // Any non-resources bundle file lives under ./<id>/...
-            targetPath = path.join(bundleRootDir, relativePath);
+            // Any non-resources agent file lives under ./<id>/...
+            targetPath = path.join(agentRootDir, relativePath);
           }
         } else {
-          // Non-bundle artifacts: supporting files live under .github/.<id>/...
+          // Non-agent artifacts: supporting files live under .github/.<id>/...
           targetPath = path.join(legacySupportingDir, relativePath);
         }
 
@@ -440,11 +440,11 @@ export class ArtifactService {
       }
     }
 
-    // For bundles, prune any top-level resource roots that are now unused.
+    // For agents, prune any top-level resource roots that are now unused.
     // This removes things like ".specify", ".engine-x", etc. that were created
     // via resources/, while never touching shared globals like ".github" or ".vscode".
-    if (artifact.type === 'bundle' && bundleResourceRoots.size > 0) {
-      for (const root of bundleResourceRoots) {
+    if (artifact.type === 'agent' && agentResourceRoots.size > 0) {
+      for (const root of agentResourceRoots) {
         const fullPath = path.join(workspaceRoot, root);
         await this.deleteDirectoryIfExists(fullPath);
       }
@@ -517,17 +517,17 @@ export class ArtifactService {
     const workspaceRoot = this.getWorkspaceRootPath();
     const subdir = ARTIFACT_PATHS[artifact.type];
 
-    // Bundles are directory-based, but we don't want to drop a visible folder
+    // Agents are directory-based, but we don't want to drop a visible folder
     // like "./<id>/README.md" into the user's repo. Instead, we keep their
     // descriptive README in a hidden Agent Hub area under the configured
-    // installRoot (typically ".github"), while the actual bundle payload is
+    // installRoot (typically ".github"), while the actual agent payload is
     // projected into the workspace root via supportingFiles.
-    if (artifact.type === 'bundle') {
+    if (artifact.type === 'agent') {
       return path.join(
         workspaceRoot,
         installRoot,
         '.agent-hub',
-        'bundles',
+        'agents',
         artifact.id,
         'README.md',
       );

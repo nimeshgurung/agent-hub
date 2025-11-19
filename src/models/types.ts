@@ -27,7 +27,7 @@ export const ArtifactTypeSchema = z.enum([
   'prompt',
   'task',
   'profile',
-  'bundle',
+  'agent',
 ]);
 
 export const DifficultySchema = z.string().optional();

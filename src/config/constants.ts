@@ -17,7 +17,7 @@ export const ARTIFACT_PATHS = {
   prompt: 'prompts',
   task: 'tasks',
   profile: '../.vscode/agent-hub/profiles',
-  bundle: 'bundles',
+  agent: 'agents',
 } as const;
 
 export const ARTIFACT_EXTENSIONS = {
@@ -26,7 +26,7 @@ export const ARTIFACT_EXTENSIONS = {
   prompt: '.md',
   task: '.md',
   profile: '.json',
-  bundle: '.md',
+  agent: '.md',
 } as const;
 
 export const DB_VERSION = 1;

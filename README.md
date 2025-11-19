@@ -2,7 +2,7 @@
 
 > **Discover, install, and manage AI development artifacts from any Git platform**
 
-Agent Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, tasks, profiles, and bundles). Install artifacts with one click from GitHub, GitLab, or any Git platform.
+Agent Hub is a VS Code extension that provides a marketplace for AI development artifacts (chat modes, prompts, instructions, tasks, profiles, and agent packs). Install artifacts with one click from GitHub, GitLab, or any Git platform.
 
 ## Using with Agent Library
 
@@ -44,7 +44,7 @@ More details: see [`docs/with-agent-library.md`](docs/with-agent-library.md).
 - Automatic dependency resolution
 - Conflict detection and resolution
 - Update notifications
- - Support for complex bundles that install multiple agents/prompts/config files in one shot
+- Support for complex agent packs that install multiple agents/prompts/config files in one shot
 
 ### 🔐 Private Catalogs
 - Support for private repositories
@@ -55,7 +55,7 @@ More details: see [`docs/with-agent-library.md`](docs/with-agent-library.md).
 ### 👥 Team Collaboration
 - Share organization catalogs
 - Standardize AI workflows across teams
-- Profile bundles for quick setup
+- Profile agent packs for quick setup
 
 ## Getting Started
 
@@ -99,10 +99,11 @@ When you remove a repository, the extension will:
 2. Click **Preview** to view details
 3. Click **Install** to add to your workspace
 4. Standard artifacts (chatmodes, prompts, instructions, tasks) are installed under `.github/` by default
-5. **Bundles** are installed as a folder at the workspace root named after the bundle id (for example `./spec-kit`), with:
-   - `.github/agents`, `.github/prompts`, etc. inside that folder
-   - Any other resources/templates/scripts preserved under `./{id}/...`
-   - `.vscode/settings.json` (if shipped in the bundle) merged at the workspace root
+5. **Agent Packs** are installed with a hidden definition file under `.github/.agent-hub/agents/<id>/`, while their resources are projected into your workspace root:
+   - Files under `resources/.github/agents` → `.github/agents/`
+   - Files under `resources/.github/prompts` → `.github/prompts/`
+   - `.vscode/settings.json` (if shipped) → `.vscode/settings.json` at workspace root
+   - Other resources (like `.specify/`) are projected to the workspace root
 
 ## Catalog Format
 
@@ -194,8 +195,8 @@ Reference environment variables in your settings:
 - **Instructions** (`.md`): Installed to `.github/instructions/`
 - **Prompts** (`.md`): Installed to `.github/prompts/`
 - **Tasks** (`.md`): Installed to `.github/tasks/`
-- **Profiles** (`.json`): Logical bundles that reference other artifacts
-- **Bundles** (directory-based): Install as `./{id}/README.md` plus all declared `supportingFiles` (agents, prompts, templates, scripts, etc.), with `.vscode/settings.json` applied at the workspace root
+- **Profiles** (`.json`): Logical collections that reference other artifacts
+- **Agent Packs** (directory-based): Hidden definition at `.github/.agent-hub/agents/<id>/README.md` plus all declared `supportingFiles` projected into the workspace root (agents, prompts, templates, scripts, etc.), with `.vscode/settings.json` applied at the workspace root
 
 ## Contributing
 
