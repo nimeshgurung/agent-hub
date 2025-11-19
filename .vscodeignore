@@ -28,3 +28,8 @@ CHANGELOG.md
 
 
 
+# Ensure README images are included in the VSIX
+!docs/**
+!docs/images/**
+!docs/images/agent-library-flow.png
+

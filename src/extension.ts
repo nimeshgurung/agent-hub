@@ -38,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Register URI handler for deep links (vscode://publisher.extension-id/...)
   const uriHandler = vscode.window.registerUriHandler({
     handleUri: async (uri: vscode.Uri) => {
-      await handleDeepLink(uri, artifactService, searchService, catalogService, config);
+      await handleDeepLink(uri, artifactService, searchService, catalogService, config, authService);
     },
   });
   context.subscriptions.push(uriHandler);
@@ -286,7 +286,8 @@ async function handleDeepLink(
   artifactService: ArtifactService,
   searchService: SearchService,
   catalogService: CatalogService,
-  config: Configuration
+  config: Configuration,
+  authService: AuthService
 ): Promise<void> {
   try {
     const path = uri.path;
@@ -295,7 +296,7 @@ async function handleDeepLink(
     console.log('Deep link received:', { path, query: query.toString() });
 
     if (path === '/installArtifact' || path === '/installArtifact/') {
-      await handleInstallArtifact(query, artifactService, searchService, catalogService, config);
+      await handleInstallArtifact(query, artifactService, searchService, catalogService, config, authService);
     } else {
       vscode.window.showWarningMessage(`Unknown Agent Hub deep link action: ${path}`);
     }
@@ -314,7 +315,8 @@ async function handleInstallArtifact(
   artifactService: ArtifactService,
   searchService: SearchService,
   catalogService: CatalogService,
-  config: Configuration
+  config: Configuration,
+  authService: AuthService
 ): Promise<void> {
   const artifactType = query.get('artifactType');
   const artifactId = query.get('artifactId');
@@ -337,11 +339,11 @@ async function handleInstallArtifact(
 
   // Step 1: Ensure the catalog is added
   if (catalogRepoUrl) {
-    await ensureCatalogExists(catalogRepoUrl, catalogPath, catalogService, config);
+    await ensureCatalogExists(catalogRepoUrl, catalogPath, catalogService, config, authService);
   }
 
   // Step 2: Find the artifact in the search index
-  const searchResult = searchService.search({ query: artifactId, type: artifactType as any });
+  const searchResult = searchService.search({ query: artifactId, type: [artifactType as any] });
   const artifact = searchResult.artifacts.find((a) => a.id === artifactId);
 
   if (!artifact) {
@@ -373,7 +375,8 @@ async function ensureCatalogExists(
   catalogUrl: string,
   catalogPath: string,
   catalogService: CatalogService,
-  config: Configuration
+  config: Configuration,
+  authService: AuthService
 ): Promise<void> {
   const repos = config.getRepositories();
   const existing = repos.find((r) => r.url === catalogUrl);
@@ -383,29 +386,80 @@ async function ensureCatalogExists(
     return;
   }
 
-  // Catalog not found, prompt user to add it
-  const answer = await vscode.window.showInformationMessage(
-    `The Agent Library catalog is not installed. Would you like to add it now?\n\nURL: ${catalogUrl}`,
-    'Add Catalog',
+  // Catalog not found, drive interactive "Add Repository" flow with prefilled values
+  const proceed = await vscode.window.showInformationMessage(
+    `Agent Library catalog not configured. Add it now?`,
+    'Add',
     'Cancel'
   );
-
-  if (answer !== 'Add Catalog') {
+  if (proceed !== 'Add') {
     throw new Error('User declined to add catalog');
   }
 
-  // Generate a catalog ID from the URL
-  const catalogId = generateIdFromUrl(catalogUrl);
+  // Step 1: URL (prefilled)
+  const url = await vscode.window.showInputBox({
+    prompt: 'Confirm catalog URL',
+    value: catalogUrl,
+    validateInput: (value) => {
+      try {
+        // eslint-disable-next-line no-new
+        new URL(value);
+        return null;
+      } catch {
+        return 'Please enter a valid URL';
+      }
+    },
+  });
+  if (!url) {
+    throw new Error('Catalog URL not provided');
+  }
 
-  const catalogConfig = {
-    id: catalogId,
-    url: catalogUrl,
-    enabled: true,
-  };
+  // Step 2: ID (prefilled from URL)
+  const defaultId = generateIdFromUrl(url);
+  const id = await vscode.window.showInputBox({
+    prompt: 'Enter catalog ID',
+    value: defaultId,
+    validateInput: (value) => {
+      if (!/^[a-z0-9-]+$/.test(value)) {
+        return 'ID can only contain lowercase letters, numbers, and hyphens';
+      }
+      return null;
+    },
+  });
+  if (!id) {
+    throw new Error('Catalog ID not provided');
+  }
 
-  await catalogService.addCatalog(catalogConfig);
-  await config.setRepositories([...repos, catalogConfig]);
+  // Step 3: Auth
+  const requiresAuth = await vscode.window.showQuickPick(['No', 'Yes'], {
+    placeHolder: 'Does this repository require authentication?',
+  });
 
-  vscode.window.showInformationMessage(`Added catalog: ${catalogId}`);
+  try {
+    const catalogConfig = {
+      id,
+      url,
+      enabled: true,
+      auth: requiresAuth === 'Yes' ? { type: 'bearer' as const } : undefined,
+    };
+
+    if (requiresAuth === 'Yes') {
+      await authService.promptForToken(id, id);
+    }
+
+    await catalogService.addCatalog(catalogConfig);
+
+    const updatedRepos = config.getRepositories();
+    await config.setRepositories([...updatedRepos, catalogConfig]);
+
+    // Optionally refresh search view for immediate availability
+    await vscode.commands.executeCommand('agent-hub.refreshCatalogs');
+
+    vscode.window.showInformationMessage(`Added catalog: ${id}`);
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    vscode.window.showErrorMessage(`Failed to add catalog: ${error}`);
+    throw err;
+  }
 }
 

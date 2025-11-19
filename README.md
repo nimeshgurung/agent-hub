@@ -8,15 +8,9 @@ Agent Hub is a VS Code extension that provides a marketplace for AI development 
 
 ## Using with Agent Library
 
-```mermaid
-flowchart LR
-    Library["Agent Library<br/>(Create & Publish)"]
-    Hub["Agent Hub<br/>(Discover & Install)"]
-    Copilot["GitHub Copilot<br/>(Consume & Run)"]
+<!-- Marketplace-friendly diagram (PNG). Place the screenshot at docs/images/agent-library-flow.png -->
+![Agent Library → Agent Hub → GitHub Copilot](/docs/images/agent-library-flow.png)
 
-    Library -- 1. Generates Catalog --> Hub
-    Hub -- 2. Installs Artifacts --> Copilot
-```
 
 Agent Library is a companion scaffold for publishing catalogs of artifacts (chatmodes, prompts, instructions, tasks) and hosting a browsable frontend. Use Agent Library to generate your `copilot-catalog.json`, then add that URL in Agent Hub to search and install artifacts in VS Code.
 
