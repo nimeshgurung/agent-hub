@@ -82,6 +82,11 @@ export class ArtifactService {
       throw new Error('Artifact not installed');
     }
 
+    // Try to load artifact definition so we can clean up supporting files correctly.
+    // If the catalog has been removed or the artifact is missing, we still best-effort
+    // delete the main path and bundle directory (if any).
+    const artifact = this.searchService.getArtifact(catalogId, artifactId);
+
     // Prompt for confirmation
     const confirm = await vscode.window.showWarningMessage(
       `Delete ${path.basename(installation.installedPath)} and its supporting files?`,
@@ -99,6 +104,38 @@ export class ArtifactService {
     } catch (err) {
       console.error('Failed to delete main file:', err);
       // Continue anyway to remove supporting files and from DB
+    }
+
+    // If this looks like a bundle installation (…/<artifactId>/README.md),
+    // also delete the containing directory so we clean up the local bundle root.
+    try {
+      const parentDir = path.dirname(installation.installedPath);
+      if (path.basename(parentDir) === artifactId) {
+        await this.deleteDirectoryIfExists(parentDir);
+      }
+
+      // Additionally, clean up a bundle-specific resources folder at the workspace
+      // root (e.g. ".spec-kit") if the user has used that pattern. We never touch
+      // global folders like ".github", only the bundle-scoped ".[bundleId]" root.
+      const workspaceRoot = this.getWorkspaceRootPath();
+      const bundleResourcesDir = path.join(workspaceRoot, `.${artifactId}`);
+      await this.deleteDirectoryIfExists(bundleResourcesDir);
+    } catch (err) {
+      console.error('Failed to delete bundle directory:', err);
+      // Non-fatal – continue cleanup
+    }
+
+    // Delete supporting files that were installed alongside the main artifact.
+    // For bundles, this includes resources projected into the workspace root
+    // (e.g. .specify, .github, .vscode). For other types, this is the hidden
+    // .github/.<id> layout.
+    if (artifact && artifact.supportingFiles && artifact.supportingFiles.length > 0) {
+      try {
+        await this.uninstallSupportingFiles(artifact, installation.installedPath);
+      } catch (err) {
+        console.error('Failed to delete supporting files for artifact:', artifactId, err);
+        // Non-fatal – continue cleanup
+      }
     }
 
     // Delete supporting files directory if it exists
@@ -205,27 +242,31 @@ export class ArtifactService {
       cancellable: false
     }, async (progress) => {
       try {
-        // Download main artifact content
-        progress.report({
-          increment: 0,
-          message: `Downloading main file (1/${totalFiles})...`
-        });
-        const content = await this.http.fetchText(artifact.sourceUrl, { auth });
+        // Download main artifact content for non-bundle types.
+        // For bundles, the main README is used for catalog/preview only and
+        // does not need to be written into the user's workspace.
+        if (artifact.type !== 'bundle') {
+          progress.report({
+            increment: 0,
+            message: `Downloading main file (1/${totalFiles})...`
+          });
+          const content = await this.http.fetchText(artifact.sourceUrl, { auth });
 
-        // Ensure directory exists
-        const dir = path.dirname(targetPath);
-        await vscode.workspace.fs.createDirectory(vscode.Uri.file(dir));
+          // Ensure directory exists
+          const dir = path.dirname(targetPath);
+          await vscode.workspace.fs.createDirectory(vscode.Uri.file(dir));
 
-        // Write main file
-        await vscode.workspace.fs.writeFile(
-          vscode.Uri.file(targetPath),
-          Buffer.from(content, 'utf-8')
-        );
-        downloadedFiles++;
-        progress.report({
-          increment: (1 / totalFiles) * 100,
-          message: `Downloaded ${downloadedFiles}/${totalFiles}`
-        });
+          // Write main file
+          await vscode.workspace.fs.writeFile(
+            vscode.Uri.file(targetPath),
+            Buffer.from(content, 'utf-8')
+          );
+          downloadedFiles++;
+          progress.report({
+            increment: (1 / totalFiles) * 100,
+            message: `Downloaded ${downloadedFiles}/${totalFiles}`
+          });
+        }
 
         // Download and install supporting files
         if (artifact.supportingFiles && artifact.supportingFiles.length > 0) {
@@ -277,7 +318,14 @@ export class ArtifactService {
     const catalogBaseUrl = this.getCatalogBaseUrl(artifact.sourceUrl, artifact.path);
 
     const workspaceRoot = this.getWorkspaceRootPath();
-    const supportingDir = path.join(workspaceRoot, '.github', `.${artifact.id}`);
+
+    // For bundles, we want two behaviors:
+    // - Files under "resources/..." (e.g., ".specify", ".github/agents", etc.) go under the workspace root
+    //   with the "resources/" prefix dropped.
+    // - Files under ".vscode/..." (e.g., ".vscode/settings.json") go at the workspace root.
+    // For all other artifact types, we keep using the hidden .github/.<id> folder.
+    const bundleRootDir = path.dirname(mainFilePath);
+    const legacySupportingDir = path.join(workspaceRoot, '.github', `.${artifact.id}`);
 
     let downloadedCount = startCount;
 
@@ -295,9 +343,28 @@ export class ArtifactService {
         const content = await this.http.fetchText(fileUrl, { auth });
 
         // Extract relative path from the supporting file path
-        // e.g., "chatmodes/.../.ceo-advisor/scripts/analyzer.py" -> "scripts/analyzer.py"
+        // e.g., "bundles/<id>/.github/agents/foo.agent.md" -> ".github/agents/foo.agent.md"
         const relativePath = this.extractRelativePath(filePath, artifact.id);
-        const targetPath = path.join(supportingDir, relativePath);
+
+        let targetPath: string;
+        if (artifact.type === 'bundle') {
+          if (relativePath.startsWith('resources/')) {
+            // Everything under resources/ is projected into the workspace root,
+            // dropping the "resources/" prefix. This is how we support layouts
+            // like ".specify/..." or other top-level folders inside a bundle.
+            const innerPath = relativePath.substring('resources/'.length);
+            targetPath = path.join(workspaceRoot, innerPath);
+          } else if (relativePath.startsWith('.vscode/')) {
+            // Workspace-level VS Code settings always live at the workspace root
+            targetPath = path.join(workspaceRoot, relativePath);
+          } else {
+            // All other bundle files live under ./<id>/
+            targetPath = path.join(bundleRootDir, relativePath);
+          }
+        } else {
+          // Legacy behavior for non-bundle artifacts
+          targetPath = path.join(legacySupportingDir, relativePath);
+        }
 
         // Ensure directory exists
         const dir = path.dirname(targetPath);
@@ -319,6 +386,67 @@ export class ArtifactService {
         progress.report({
           increment: (1 / totalFiles) * 100
         });
+      }
+    }
+  }
+
+  private async uninstallSupportingFiles(
+    artifact: ArtifactWithSource,
+    mainFilePath: string,
+  ): Promise<void> {
+    if (!artifact.supportingFiles || artifact.supportingFiles.length === 0) {
+      return;
+    }
+
+    const workspaceRoot = this.getWorkspaceRootPath();
+    const bundleRootDir = path.dirname(mainFilePath);
+    const legacySupportingDir = path.join(workspaceRoot, '.github', `.${artifact.id}`);
+    const bundleResourceRoots = new Set<string>(); // track top-level resource roots for pruning
+
+    for (const filePath of artifact.supportingFiles) {
+      try {
+        const relativePath = this.extractRelativePath(filePath, artifact.id);
+
+        let targetPath: string;
+        if (artifact.type === 'bundle') {
+          if (relativePath.startsWith('resources/')) {
+            // Mirror of install logic: resources/<path> was projected into workspace root.
+            const innerPath = relativePath.substring('resources/'.length);
+            targetPath = path.join(workspaceRoot, innerPath);
+
+            // Track the top-level directory under resources (e.g. ".specify", ".engine-x").
+            // We will prune these roots after file deletion, except for global folders
+            // like ".github" and ".vscode" which may be shared.
+            const segments = innerPath.split('/');
+            const root = segments[0] || '';
+            if (root && root !== '.github' && root !== '.vscode') {
+              bundleResourceRoots.add(root);
+            }
+          } else if (relativePath.startsWith('.vscode/')) {
+            targetPath = path.join(workspaceRoot, relativePath);
+          } else {
+            // Any non-resources bundle file lives under ./<id>/...
+            targetPath = path.join(bundleRootDir, relativePath);
+          }
+        } else {
+          // Non-bundle artifacts: supporting files live under .github/.<id>/...
+          targetPath = path.join(legacySupportingDir, relativePath);
+        }
+
+        // Best-effort delete – ignore if missing.
+        await vscode.workspace.fs.delete(vscode.Uri.file(targetPath));
+      } catch {
+        // Ignore individual failures; we don't want one bad file to break uninstall.
+      }
+    }
+
+    // For bundles, prune any top-level resource roots that are now unused.
+    // This removes things like ".specify", ".engine-x", etc. that were created
+    // via resources/, while never touching shared globals like ".github" or ".vscode".
+    if (artifact.type === 'bundle' && bundleResourceRoots.size > 0) {
+      for (const root of bundleResourceRoots) {
+        const fullPath = path.join(workspaceRoot, root);
+        await this.deleteDirectoryIfExists(fullPath);
       }
     }
   }
@@ -388,6 +516,23 @@ export class ArtifactService {
   private getInstallPath(artifact: ArtifactWithSource, installRoot: string): string {
     const workspaceRoot = this.getWorkspaceRootPath();
     const subdir = ARTIFACT_PATHS[artifact.type];
+
+    // Bundles are directory-based, but we don't want to drop a visible folder
+    // like "./<id>/README.md" into the user's repo. Instead, we keep their
+    // descriptive README in a hidden Agent Hub area under the configured
+    // installRoot (typically ".github"), while the actual bundle payload is
+    // projected into the workspace root via supportingFiles.
+    if (artifact.type === 'bundle') {
+      return path.join(
+        workspaceRoot,
+        installRoot,
+        '.agent-hub',
+        'bundles',
+        artifact.id,
+        'README.md',
+      );
+    }
+
     const ext = ARTIFACT_EXTENSIONS[artifact.type];
     const filename = `${artifact.id}${ext}`;
 

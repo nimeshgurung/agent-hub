@@ -21,7 +21,14 @@ export const CompatibilitySchema = z.object({
   copilot: z.string().optional(),
 }).optional();
 
-export const ArtifactTypeSchema = z.enum(['chatmode', 'instructions', 'prompt', 'task', 'profile']);
+export const ArtifactTypeSchema = z.enum([
+  'chatmode',
+  'instructions',
+  'prompt',
+  'task',
+  'profile',
+  'bundle',
+]);
 
 export const DifficultySchema = z.string().optional();
 
