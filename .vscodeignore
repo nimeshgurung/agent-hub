@@ -19,6 +19,7 @@ src/**
 test/**
 scripts/**
 examples/**
+agent-hub-final.mp4
 esbuild.config.js
 tsconfig.json
 tsconfig.webview.json

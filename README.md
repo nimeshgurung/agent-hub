@@ -1,6 +1,19 @@
+
 # Agent Hub
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/nimsbhai.agent-hub?label=Install%20from%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=nimsbhai.agent-hub)
+
+<p>
+  <video
+    src="https://raw.githubusercontent.com/nimeshgurung/agent-hub/main/agent-hub-final.mp4"
+    controls
+    playsinline
+    style="width: 100%; max-width: 100%; height: auto; border-radius: 12px; display: block;"
+  >
+    Your environment does not support embedded videos.
+    <a href="https://raw.githubusercontent.com/nimeshgurung/agent-hub/main/agent-hub-final.mp4">Watch the Agent Hub overview video</a>.
+  </video>
+</p>
 
 > **Discover, install, and manage AI development artifacts from any Git platform**
 
