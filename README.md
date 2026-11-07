@@ -1,11 +1,14 @@
 
 # Agent Hub
 
+![Agent Hub — Agents. Prompts. Workflows.](https://raw.githubusercontent.com/nimeshgurung/agent-hub/main/docs/images/agent-hub-social-preview.jpg)
+
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/nimsbhai.agent-hub?label=Install%20from%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=nimsbhai.agent-hub)
 
 <p>
   <video
     src="https://raw.githubusercontent.com/nimeshgurung/agent-hub/main/agent-hub-final.mp4"
+    poster="https://raw.githubusercontent.com/nimeshgurung/agent-hub/main/docs/images/agent-hub-social-preview.jpg"
     controls
     playsinline
     style="width: 100%; max-width: 100%; height: auto; border-radius: 12px; display: block;"
@@ -270,4 +273,5 @@ MIT © Artifact Hub
 - Repositories view with an Agent Library catalog added (docs/images/repos-view.png)
 - Search results showing multiple artifacts (docs/images/search-results.png)
 - Artifact detail with one-click install (docs/images/artifact-detail.png)
+
 
